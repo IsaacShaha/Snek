@@ -55,8 +55,10 @@ def move():
         move = "up"
         globalvariable += 1
     if(globalvariable == 1):
-        move = "down"
-        globalvariable -= 1
+        move = "right"
+        globalvariable += 1
+    if(globalvariable == 2):
+        move = "left"
 
     # Shouts are messages sent to all the other snakes in the game.
     # Shouts are not displayed on the game board.
