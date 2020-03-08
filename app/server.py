@@ -49,6 +49,7 @@ def move():
 
     # Choose a random direction to move in
     directions = ["up", "right", "down", "left"]
+    global direction
     direction = (direction + 1) % 4
     move = directions[direction]
 
