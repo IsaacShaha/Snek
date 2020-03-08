@@ -9,7 +9,7 @@ globalvariable = 0
 
 @bottle.route("/")
 def index():
-    return "Your Battlesnake is alive!"
+    return "Your Battlesnake is alive! 1"
 
 
 @bottle.post("/ping")
