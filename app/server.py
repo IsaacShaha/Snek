@@ -39,7 +39,7 @@ def start():
 
 @bottle.post("/move")
 def move():
-	"""
+    """
     Called when the Battlesnake Engine needs to know your next move.
     The data parameter will contain information about the board.
     Your response must include your move of up, down, left, or right.
@@ -49,7 +49,7 @@ def move():
 
     # Choose a random direction to move in
     directions = ["up", "right", "down", "left"]
-    direction += 1
+    direction = (direction + 1) % 4
     move = directions[direction]
 
     # Shouts are messages sent to all the other snakes in the game.
