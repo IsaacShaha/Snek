@@ -5,7 +5,7 @@ import random
 import bottle
 from bottle import HTTPResponse
 
-globalvariable = 0
+
 
 @bottle.route("/")
 def index():
