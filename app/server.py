@@ -5,7 +5,7 @@ import random
 import bottle
 from bottle import HTTPResponse
 
-
+direction = -1
 
 @bottle.route("/")
 def index():
@@ -39,7 +39,7 @@ def start():
 
 @bottle.post("/move")
 def move():
-    """
+	"""
     Called when the Battlesnake Engine needs to know your next move.
     The data parameter will contain information about the board.
     Your response must include your move of up, down, left, or right.
@@ -48,14 +48,13 @@ def move():
     print("MOVE:", json.dumps(data))
 
     # Choose a random direction to move in
-    directions = ["up", "down", "left", "right"]
-    #move = random.choice(directions)
-    
-    move = "right"
+    directions = ["up", "right", "down", "left"]
+    direction += 1
+    move = directions[direction]
 
     # Shouts are messages sent to all the other snakes in the game.
     # Shouts are not displayed on the game board.
-    shout = "I am a python snake!"
+    shout = "am snek :-) pls 2 meet u"
 
     response = {"move": move, "shout": shout}
     return HTTPResponse(
