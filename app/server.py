@@ -49,14 +49,9 @@ def move():
 
     # Choose a random direction to move in
     directions = ["up", "down", "left", "right"]
-    move = random.choice(directions)
+    #move = random.choice(directions)
     
-    if(globalvariable == 0):
-        move = "up"
-        globalvariable += 1
-    if(globalvariable == 1):
-        move = "down"
-        globalvariable -= 1
+    move = "right"
 
     # Shouts are messages sent to all the other snakes in the game.
     # Shouts are not displayed on the game board.
