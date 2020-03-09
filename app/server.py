@@ -90,13 +90,13 @@ def move():
 					continue
 				#Add neighbouring grids that exist to d, differential list.
 				differential = []
-				if y > 0:
+				if y - 1 >= 0:
 					differential.append((-1, 0))
-				if y < data["board"]["height"] - 1:
+				if y + 1 < data["board"]["height"]:
 					differential.append((1, 0))
-				if x > 0:
+				if x - 1 >= 0:
 					differential.append((0, -1))
-				if x < data["board"]["width"] - 1:
+				if x + 1 < data["board"]["width"]:
 					differential.append((0, 1))
 				#Condition 1: I am -1 and my neighbour is >= 0. Change to neighbour+1.
 				#Condition 2: My neighbour is >= 0 and I am 2 or more greater than my neighbour. Change to neighbour+1.
@@ -119,18 +119,18 @@ def move():
 
 	validMoves = []
 	for move in moves:
-		if move[0] > 0 and move[0] < data["board"]["width"] - 1 and move[1] > 0 and move[1] < data["board"]["height"] - 1:
+		if move[0] >= 0 and move[0] < data["board"]["width"] and move[1] >= 0 and move[1] < data["board"]["height"]:
 			validMoves.append(move)
 
 	lowestNumber = -1
 	move = "up"
-	#Condition 1: lowestNumber is -1 and neighbour is a nonnegative number.
-	#Condition 2: lowestNumber is >= 0 and neighbour is < lowestNumber.
+	#Condition 1: lowestNumber is -1 and neighbour is any number.
+	#Condition 2: lowestNumber is >= 0 and neighbour is a nonnegative number and neighbour is < lowestNumber.
 	for validMove in validMoves:
 		neighbour = grid[validMove[1]][validMove[0]]
 		if not isinstance(neighbour, int):
 			continue
-		if (lowestNumber == -1 and neighbour >= 0) or (lowestNumber >= 0 and neighbour < lowestNumber):
+		if (lowestNumber == -1) or (lowestNumber >= 0 and neighbour >= 0 and neighbour < lowestNumber):
 			lowestNumber = neighbour
 			move = validMove[2]
 
@@ -139,6 +139,9 @@ def move():
 	shout = "am snek :-) pls 2 meet u"
 
 	response = {"move": move, "shout": shout}
+
+	print(turnNumber)
+	printGrid(grid)
 
 	return HTTPResponse(
 		status=200,
