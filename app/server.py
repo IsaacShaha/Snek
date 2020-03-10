@@ -20,7 +20,7 @@ def printGrid(grid):
 			line += "\t"
 		print(line)
 
-def fillGrid(grid, data, y, x):
+def fillGrid(grid, data, y, x, changed):
 	if not isinstance(grid[y][x], int):
 		return
 	#Add neighbouring grids that exist to d, differential list.
@@ -41,7 +41,7 @@ def fillGrid(grid, data, y, x):
 			continue
 		if (grid[y][x] == -1 and neighbour >= 0) or (neighbour >= 0 and grid[y][x] - neighbour >= 2):
 			grid[y][x] = neighbour + 1
-			changed = True
+			changed[0] = True
 
 @bottle.route("/")
 def index():
@@ -106,12 +106,12 @@ def move():
 
 	if priority == 1:
 		#Replace -1's with distance to nearest food.
-		changed = True
+		changed = [True]
 		direction = 0
 		count = 0
-		while changed:
+		while changed[0]:
 			count += 1
-			changed = False
+			changed[0] = False
 			if direction % 2 == 0:
 				yRange = range(len(grid))
 				xRange = range(len(grid))
@@ -121,11 +121,11 @@ def move():
 			if direction < 2:
 				for y in yRange:
 					for x in xRange:
-						fillGrid(grid, data, y, x)
+						fillGrid(grid, data, y, x, changed)
 			else:
 				for x in xRange:
 					for y in yRange:
-						fillGrid(grid, data, y, x)
+						fillGrid(grid, data, y, x, changed)
 			direction = (direction + 1) % 4
 
 	head = data["you"]["body"][0]
