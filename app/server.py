@@ -6,7 +6,7 @@ import bottle
 from bottle import HTTPResponse
 
 turnNumber = 0
-priority = "food"
+priority = 1
 
 def getDistance(coord1, coord2):
 	return abs(coord1["x"] - coord2["x"]) + abs(coord1["y"] - coord2["y"])
@@ -100,6 +100,9 @@ def move():
 		for i in range(len(snake["body"])):
 			body = snake["body"][i]
 			grid[body["y"]][body["x"]] = "b" if i != 0 and grid[body["y"]][body["x"]] != "h" else "h"
+			if grid[body["y"]][body["x"]] == "h":
+				if len(snake["body"]) >= len(data["you"]["body"]):
+					pass#ADD DANGER
 
 	if priority == 1:
 		#Replace -1's with distance to nearest food.
@@ -149,6 +152,8 @@ def move():
 	# Shouts are messages sent to all the other snakes in the game.
 	# Shouts are not displayed on the game board.
 	shout = "am snek :-) pls 2 meet u"
+
+	printGrid(grid)
 
 	response = {"move": move, "shout": shout}
 
