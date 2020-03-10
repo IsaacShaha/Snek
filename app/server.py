@@ -20,6 +20,29 @@ def printGrid(grid):
 			line += "\t"
 		print(line)
 
+def fillGrid(grid, data, y, x):
+	if not isinstance(grid[y][x], int):
+		return
+	#Add neighbouring grids that exist to d, differential list.
+	differential = []
+	if y - 1 >= 0:
+		differential.append((-1, 0))
+	if y + 1 < data["board"]["height"]:
+		differential.append((1, 0))
+	if x - 1 >= 0:
+		differential.append((0, -1))
+	if x + 1 < data["board"]["width"]:
+		differential.append((0, 1))
+	#Condition 1: I am -1 and my neighbour is >= 0. Change to neighbour+1.
+	#Condition 2: My neighbour is >= 0 and I am 2 or more greater than my neighbour. Change to neighbour+1.
+	for d in differential:
+		neighbour = grid[y+d[0]][x+d[1]]
+		if not isinstance(neighbour, int):
+			continue
+		if (grid[y][x] == -1 and neighbour >= 0) or (neighbour >= 0 and grid[y][x] - neighbour >= 2):
+			grid[y][x] = neighbour + 1
+			changed = True
+
 @bottle.route("/")
 def index():
 	return "Your Battlesnake is alive!"
@@ -78,43 +101,29 @@ def move():
 			body = snake["body"][i]
 			grid[body["y"]][body["x"]] = "b" if i != 0 and grid[body["y"]][body["x"]] != "h" else "h"
 
-	#Replace -1's with distance to nearest food.
-	changed = True
-	direction = 0
-	count = 0
-	while changed:
-		count += 1
-		changed = False
-		if direction == 0:
-			yRange = range(len(grid))
-			xRange = range(len(grid))
-		elif direction == 1:
-			yRange = range(len(grid)-1, -1, -1)
-			xRange = range(len(grid[0])-1, -1, -1)
-		direction = (direction + 1) % 2
-		for y in yRange:
-			for x in xRange:
-				if not isinstance(grid[y][x], int):
-					continue
-				#Add neighbouring grids that exist to d, differential list.
-				differential = []
-				if y - 1 >= 0:
-					differential.append((-1, 0))
-				if y + 1 < data["board"]["height"]:
-					differential.append((1, 0))
-				if x - 1 >= 0:
-					differential.append((0, -1))
-				if x + 1 < data["board"]["width"]:
-					differential.append((0, 1))
-				#Condition 1: I am -1 and my neighbour is >= 0. Change to neighbour+1.
-				#Condition 2: My neighbour is >= 0 and I am 2 or more greater than my neighbour. Change to neighbour+1.
-				for d in differential:
-					neighbour = grid[y+d[0]][x+d[1]]
-					if not isinstance(neighbour, int):
-						continue
-					if (grid[y][x] == -1 and neighbour >= 0) or (neighbour >= 0 and grid[y][x] - neighbour >= 2):
-						grid[y][x] = neighbour + 1
-						changed = True
+	if priority == 1:
+		#Replace -1's with distance to nearest food.
+		changed = True
+		direction = 0
+		count = 0
+		while changed:
+			count += 1
+			changed = False
+			if direction % 2 == 0:
+				yRange = range(len(grid))
+				xRange = range(len(grid))
+			else:
+				yRange = range(len(grid)-1, -1, -1)
+				xRange = range(len(grid[0])-1, -1, -1)
+			if direction < 2:
+				for y in yRange:
+					for x in xRange:
+						fillGrid(grid, data, y, x)
+			else:
+				for x in xRange:
+					for y in yRange:
+						fillGrid(grid, data, y, x)
+			direction = (direction + 1) % 4
 
 	head = data["you"]["body"][0]
 	moves = ((head["x"], head["y"]-1, "up"), (head["x"]-1, head["y"], "left"),
