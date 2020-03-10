@@ -6,7 +6,6 @@ import bottle
 from bottle import HTTPResponse
 
 turnNumber = 0
-direction = -1
 priority = "food"
 
 def getDistance(coord1, coord2):
@@ -58,7 +57,6 @@ def move():
 	"""
 
 	global turnNumber
-	global direction
 	global priority
 
 	data = bottle.request.json
@@ -82,10 +80,20 @@ def move():
 
 	#Replace -1's with distance to nearest food.
 	changed = True
+	direction = 0
+	count = 0
 	while changed:
+		count += 1
 		changed = False
-		for y in range(len(grid)):
-			for x in range(len(grid)):
+		if direction == 0:
+			yRange = range(len(grid))
+			xRange = range(len(grid))
+		elif direction == 1:
+			yRange = range(len(grid)-1, -1, -1)
+			xRange = range(len(grid[0])-1, -1, -1)
+		direction = (direction + 1) % 2
+		for y in yRange:
+			for x in xRange:
 				if not isinstance(grid[y][x], int):
 					continue
 				#Add neighbouring grids that exist to d, differential list.
@@ -104,12 +112,7 @@ def move():
 					neighbour = grid[y+d[0]][x+d[1]]
 					if not isinstance(neighbour, int):
 						continue
-					#Condition 1
-					if grid[y][x] == -1 and neighbour >= 0:
-						grid[y][x] = neighbour + 1
-						changed = True
-					#Condition 2
-					elif neighbour >= 0 and grid[y][x] - neighbour >= 2:
+					if (grid[y][x] == -1 and neighbour >= 0) or (neighbour >= 0 and grid[y][x] - neighbour >= 2):
 						grid[y][x] = neighbour + 1
 						changed = True
 
@@ -139,9 +142,6 @@ def move():
 	shout = "am snek :-) pls 2 meet u"
 
 	response = {"move": move, "shout": shout}
-
-	print(turnNumber)
-	printGrid(grid)
 
 	return HTTPResponse(
 		status=200,
