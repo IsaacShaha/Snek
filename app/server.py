@@ -101,8 +101,14 @@ def move():
 			body = snake["body"][i]
 			grid[body["y"]][body["x"]] = "b" if i != 0 and grid[body["y"]][body["x"]] != "h" else "h"
 			if grid[body["y"]][body["x"]] == "h":
-				if len(snake["body"]) >= len(data["you"]["body"]):
-					pass#ADD DANGER
+				if len(snake["body"]) >= len(data["you"]["body"]) and getDistance(snake["body"][0], data["you"]["body"][0]) > 0:
+					offsets = ((-1, 0), (0, -1), (0, 1), (1, 0))
+					for dy, dx in offsets:
+						try:
+							neighbour = grid[body["y"]+dy][body["x"]+dx]
+							grid[body["y"]+dy][body["x"]+dx] = "d" if isinstance(neighbour, int) else neighbour
+						except Exception as e:
+							pass
 
 	if priority == 1:
 		#Replace -1's with distance to nearest food.
