@@ -100,15 +100,16 @@ def move():
 		for i in range(len(snake["body"])):
 			body = snake["body"][i]
 			grid[body["y"]][body["x"]] = "b" if i != 0 and grid[body["y"]][body["x"]] != "h" else "h"
-			if grid[body["y"]][body["x"]] == "h":
-				if len(snake["body"]) >= len(data["you"]["body"]) and getDistance(snake["body"][0], data["you"]["body"][0]) > 0:
-					offsets = ((-1, 0), (0, -1), (0, 1), (1, 0))
-					for dy, dx in offsets:
-						try:
-							neighbour = grid[body["y"]+dy][body["x"]+dx]
-							grid[body["y"]+dy][body["x"]+dx] = "d" if isinstance(neighbour, int) else neighbour
-						except Exception as e:
-							pass
+		#Add danger beside bigger snake's heads.
+		if len(snake["body"]) >= len(data["you"]["body"]) and getDistance(snake["body"][0], data["you"]["body"][0]) > 0:
+			offsets = ((-1, 0), (0, -1), (0, 1), (1, 0))
+			head = snake["body"][0]
+			for dy, dx in offsets:
+				try:
+					neighbour = grid[head["y"]+dy][head["x"]+dx]
+					grid[head["y"]+dy][head["x"]+dx] = "d" if isinstance(neighbour, int) else neighbour
+				except Exception as e:
+					pass
 
 	if priority == 1:
 		#Replace -1's with distance to nearest food.
@@ -143,23 +144,22 @@ def move():
 		if move[0] >= 0 and move[0] < data["board"]["width"] and move[1] >= 0 and move[1] < data["board"]["height"]:
 			validMoves.append(move)
 
-	lowestNumber = -1
+	lowestNumber = "d"
 	move = "up"
-	#Condition 1: lowestNumber is -1 and neighbour is any number.
+	#Condition 1: lowestNumber is "d" or -1 and neighbour is any number or "d".
 	#Condition 2: lowestNumber is >= 0 and neighbour is a nonnegative number and neighbour is < lowestNumber.
 	for validMove in validMoves:
 		neighbour = grid[validMove[1]][validMove[0]]
 		if not isinstance(neighbour, int):
 			continue
-		if (lowestNumber == -1) or (lowestNumber >= 0 and neighbour >= 0 and neighbour < lowestNumber):
+		if ((lowestNumber in (-1, "d") and (isinstance(neighbour, int) or neighbour == "d")) or
+		(lowestNumber >= 0 and isinstance(neighbour, int) and neighbour >= 0 and neighbour < lowestNumber)):
 			lowestNumber = neighbour
 			move = validMove[2]
 
 	# Shouts are messages sent to all the other snakes in the game.
 	# Shouts are not displayed on the game board.
 	shout = "am snek :-) pls 2 meet u"
-
-	printGrid(grid)
 
 	response = {"move": move, "shout": shout}
 
