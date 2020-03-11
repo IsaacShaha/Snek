@@ -1,9 +1,12 @@
 import json
 import os
 import random
+from queue import Queue
 
 import bottle
 from bottle import HTTPResponse
+
+NEIGHBOUR_OFFSETS = ((-1, 0), (1, 0), (0, -1), (0, 1))
 
 turnNumber = 0
 priority = 1
@@ -20,7 +23,7 @@ def printGrid(grid):
 			line += "\t"
 		print(line)
 
-def fillGrid(grid, data, y, x, changed):
+def foodGrid(grid, data, y, x, changed):
 	if not isinstance(grid[y][x], int):
 		return
 	#Add neighbouring grids that exist to d, differential list.
@@ -92,48 +95,54 @@ def move():
 		grid.append([])
 		for j in range(data["board"]["width"]):
 			grid[i].append(-1)
-	#Add food to grid, as 0.
-	for food in data["board"]["food"]:
-		grid[food["y"]][food["x"]] = 0
 	#Add snake parts to grid, as "h" for head and "b" for body and tail.
 	for snake in data["board"]["snakes"]:
 		for i in range(len(snake["body"])):
 			body = snake["body"][i]
 			grid[body["y"]][body["x"]] = "b" if i != 0 and grid[body["y"]][body["x"]] != "h" else "h"
-		#Add danger beside bigger snake's heads.
-		if len(snake["body"]) >= len(data["you"]["body"]) and getDistance(snake["body"][0], data["you"]["body"][0]) > 0:
-			offsets = ((-1, 0), (0, -1), (0, 1), (1, 0))
-			head = snake["body"][0]
-			for dy, dx in offsets:
-				try:
-					neighbour = grid[head["y"]+dy][head["x"]+dx]
-					grid[head["y"]+dy][head["x"]+dx] = "d" if isinstance(neighbour, int) else neighbour
-				except Exception as e:
-					pass
 
 	if priority == 1:
-		#Replace -1's with distance to nearest food.
-		changed = [True]
-		direction = 0
-		count = 0
-		while changed[0]:
-			count += 1
-			changed[0] = False
-			if direction % 2 == 0:
-				yRange = range(len(grid))
-				xRange = range(len(grid))
-			else:
-				yRange = range(len(grid)-1, -1, -1)
-				xRange = range(len(grid[0])-1, -1, -1)
-			if direction < 2:
-				for y in yRange:
-					for x in xRange:
-						fillGrid(grid, data, y, x, changed)
-			else:
-				for x in xRange:
-					for y in yRange:
-						fillGrid(grid, data, y, x, changed)
-			direction = (direction + 1) % 4
+
+		#Keep track of visited coordinates, so as to not re-visit them and maintain time complexity.
+		marked = []
+		for y in range(data["board"]["height"]):
+			marked.append([])
+			for x in range(data["board"]["width"]):
+				marked[y].append(False)
+
+		#Add food to grid, as 0.
+		queue = Queue(data["board"]["width"]*data["board"]["height"])#Set queue maxsize to width*height.
+		for food in data["board"]["food"]:
+			foodCoords = (food["x"], food["y"])
+			grid[foodCoords[1]][foodCoords[0]] = 0
+			marked[foodCoords[1]][foodCoords[0]] = True
+
+		#Add food neighbours to queue.
+		for food in data["board"]["food"]:
+			foodCoord = (food["x"], food["y"])
+			for dy, dx in NEIGHBOUR_OFFSETS:
+				try:#Add COORDINATE of empty neighbours to queue. Possible exceptions: Out of grid bounds.
+					neighbour = grid[foodCoord[1]+dy][foodCoord[0]+dx]
+					if neighbour == -1 and not marked[foodCoord[1]+dy][foodCoord[0]+dx]:
+						#Add the coordinates for the neighbour to the queue and set the neighbour's value.
+						grid[foodCoord[1]+dy][foodCoord[0]+dx] = 1 #Food is 0 and 0+1=1
+						queue.put((foodCoord[0]+dx, foodCoord[1]+dy))
+						marked[foodCoord[1]+dy][foodCoord[0]+dx] = True
+
+		#Now, do BFS. Time complexity is O(width*height), or O(area).
+		#This is only possible because we set the queue maxsize to width*height.
+		#With each queue entry, make the grid value the neighbour we entered.
+		#Then, add each of the new spot's unmarked neighbours to the queue.
+		while not queue.empty():
+			coord = queue.get()
+			for dy, dx in NEIGHBOUROFFSETS:
+				try:#Add COORDINATE of empty neighbours to queue. Possible exceptions: Out of grid bounds.
+					neighbour = grid[coord[1]+dy][coord[0]+dx]
+					if neighbour == -1 and not marked[coord[1]+dy][coord[0]+dx]:
+						#Add the coordinates for the neighbour to the queue and set the neighbour's value.
+						grid[coord[1]+dy][coord[0]+dx] = grid[coord[1]][coord[0]]+1
+						queue.put((coord[0]+dx, coord[1]+dy))
+						marked[coord[1]+dy][coord[0]+dx] = True
 
 	head = data["you"]["body"][0]
 	moves = ((head["x"], head["y"]-1, "up"), (head["x"]-1, head["y"], "left"),
@@ -144,16 +153,15 @@ def move():
 		if move[0] >= 0 and move[0] < data["board"]["width"] and move[1] >= 0 and move[1] < data["board"]["height"]:
 			validMoves.append(move)
 
-	lowestNumber = "d"
+	lowestNumber = -1
 	move = "up"
-	#Condition 1: lowestNumber is "d" or -1 and neighbour is any number or "d".
-	#Condition 2: lowestNumber is >= 0 and neighbour is a nonnegative number and neighbour is < lowestNumber.
+	#Condition 1: lowestNumber is -1 and neighbour is any nonnegative number.
+	#Condition 2: neighbour is >= 0 and neighbour is < lowestNumber.
 	for validMove in validMoves:
 		neighbour = grid[validMove[1]][validMove[0]]
 		if not isinstance(neighbour, int):
 			continue
-		if ((lowestNumber in (-1, "d") and (isinstance(neighbour, int) or neighbour == "d")) or
-		(lowestNumber >= 0 and isinstance(neighbour, int) and neighbour >= 0 and neighbour < lowestNumber)):
+		if ((lowestNumber == -1 and neighbour >= 0) or (neighbour >= 0 and neighbour < lowestNumber)):
 			lowestNumber = neighbour
 			move = validMove[2]
 
